@@ -2,12 +2,11 @@ import scrapy
 import json
 from urllib.parse import urlencode
 from bs4 import BeautifulSoup
-from datetime import datetime
 from eastmoney_spider.items import StockMoneyFlowItem
 
 
 class MoneyFlowSpider(scrapy.Spider):
-
+    name = "money_flow"
     allowed_domains = ["eastmoney.com", "push2.eastmoney.com"]
     
     custom_settings = {
@@ -27,19 +26,22 @@ class MoneyFlowSpider(scrapy.Spider):
             "fltt": "2",
             "ut": "b2884a393a59ad64002292a3e90d46a5",
             "fs": "m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23",
-            "fields": "f1,f2,f3,f12,f13,f14,f62,f184,f66,f69,f72,f75,f78,f81,f84,f87,f204,f205,f124,f1,f13"
+            "fields": "f1,f2,f3,f12,f13,f14,f62,f184,f66,f69,f72,f75,f78,f81,f84,f87,f204,f205,f124"
         }
         
         api_url = f"{base_url}?{urlencode(params)}"
         
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            
+            "Referer": "https://data.eastmoney.com/zjlx/detail.html",
+            "Accept": "*/*",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8"
         }
         
         yield scrapy.Request(
             url=api_url,
             method="GET",
+            headers=headers,
             callback=self.parse_api_response
         )
     
@@ -80,7 +82,14 @@ class MoneyFlowSpider(scrapy.Spider):
             xml_parts.append(f"<name><![CDATA[{item.get('f14', '')}]]></name>")
             xml_parts.append(f"<latest_price>{item.get('f2', 0)}</latest_price>")
             xml_parts.append(f"<change_percent>{item.get('f3', 0)}</change_percent>")
+            xml_parts.append(f"<main_net_inflow>{item.get('f62', 0)}</main_net_inflow>")
+            xml_parts.append(f"<main_net_inflow_ratio>{item.get('f184', 0)}</main_net_inflow_ratio>")
+            xml_parts.append(f"<super_large_net_inflow>{item.get('f66', 0)}</super_large_net_inflow>")
+            xml_parts.append(f"<super_large_net_inflow_ratio>{item.get('f69', 0)}</super_large_net_inflow_ratio>")
             xml_parts.append(f"<large_net_inflow>{item.get('f72', 0)}</large_net_inflow>")
+            xml_parts.append(f"<large_net_inflow_ratio>{item.get('f75', 0)}</large_net_inflow_ratio>")
+            xml_parts.append(f"<medium_net_inflow>{item.get('f78', 0)}</medium_net_inflow>")
+            xml_parts.append(f"<medium_net_inflow_ratio>{item.get('f81', 0)}</medium_net_inflow_ratio>")
             xml_parts.append(f"<small_net_inflow>{item.get('f84', 0)}</small_net_inflow>")
             xml_parts.append(f"<small_net_inflow_ratio>{item.get('f87', 0)}</small_net_inflow_ratio>")
             xml_parts.append("</stock>")
@@ -106,6 +115,10 @@ class MoneyFlowSpider(scrapy.Spider):
             item["main_net_inflow"] = self._format_amount(self._get_text(stock, "main_net_inflow"))
             item["main_net_inflow_ratio"] = self._get_text(stock, "main_net_inflow_ratio")
             item["super_large_net_inflow"] = self._format_amount(self._get_text(stock, "super_large_net_inflow"))
+            item["super_large_net_inflow_ratio"] = self._get_text(stock, "super_large_net_inflow_ratio")
+            item["large_net_inflow"] = self._format_amount(self._get_text(stock, "large_net_inflow"))
+            item["large_net_inflow_ratio"] = self._get_text(stock, "large_net_inflow_ratio")
+            item["medium_net_inflow"] = self._format_amount(self._get_text(stock, "medium_net_inflow"))
             item["medium_net_inflow_ratio"] = self._get_text(stock, "medium_net_inflow_ratio")
             item["small_net_inflow"] = self._format_amount(self._get_text(stock, "small_net_inflow"))
             item["small_net_inflow_ratio"] = self._get_text(stock, "small_net_inflow_ratio")
