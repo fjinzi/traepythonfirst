@@ -15,7 +15,7 @@ class ExcelPipeline:
     
     def open_spider(self, spider):
         today = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.filename = f"stock_money_flow_{today}.xlsx"
+        self.filename = f"dfcf_{today}.xlsx"
         spider.logger.info(f"ExcelPipeline 已初始化，输出文件: {self.filename}")
     
     def close_spider(self, spider):
@@ -32,6 +32,11 @@ class ExcelPipeline:
             "latest_price": "最新价",
             "change_percent": "今日涨跌幅(%)",
             "main_net_inflow": "主力净流入-净额",
+            "main_net_inflow_ratio": "主力净流入-净占比(%)",
+            "super_large_net_inflow": "超大单净流入-净额",
+            "super_large_net_inflow_ratio": "超大单净流入-净占比(%)",
+            "large_net_inflow": "大单净流入-净额",
+            "large_net_inflow_ratio": "大单净流入-净占比(%)",
             "medium_net_inflow": "中单净流入-净额",
             "medium_net_inflow_ratio": "中单净流入-净占比(%)",
             "small_net_inflow": "小单净流入-净额",
@@ -41,6 +46,7 @@ class ExcelPipeline:
         df = df.rename(columns=column_mapping)
         
         try:
+            df.to_excel(self.filename, index=False, engine="openpyxl")
             spider.logger.info(f"数据已成功保存到: {self.filename}")
             print(f"\n{'='*60}")
             print(f"数据已成功保存到: {self.filename}")
@@ -54,4 +60,5 @@ class ExcelPipeline:
             print(f"\n已改用CSV格式保存到: {csv_filename}\n")
     
     def process_item(self, item, spider):
+        self.items.append(ItemAdapter(item).asdict())
         return item
